@@ -8,3 +8,4 @@ shell/ORFfinder
 _data/*
 .java/*
 .config/*
+.cache/*

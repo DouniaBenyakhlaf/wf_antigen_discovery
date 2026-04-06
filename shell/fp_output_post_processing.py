@@ -133,9 +133,9 @@ def setClass(accession, contaminants_list=CONTAMINANTS):
     sp is the tag of proteins from swissprot (uniprot)
     source of the contaminants list: https://www.thegpm.org/crap/
     '''
-    if ((('NEOTRANSCRIPT' in accession) or ('lcl' in accession)) and 'sp' not in accession):
+    if ((('NEOTRANSCRIPT' in accession) or ('lcl' in accession)) and 'sp|' not in accession):
         return("Non canonical")
-    elif ((('NEOTRANSCRIPT' in accession) or ('lcl' in accession)) and 'sp' in accession):
+    elif ((('NEOTRANSCRIPT' in accession) or ('lcl' in accession)) and 'sp|' in accession):
         return("Ambiguous")
     elif any(contaminant in accession for contaminant in contaminants_list):
         return('Contaminant')
