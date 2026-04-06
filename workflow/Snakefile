@@ -54,9 +54,23 @@ rule all:
         ]
 
 
-rule translate:
+rule fix_fasta_header:
     input:
         input_fasta = lambda wildcards: get_search(wildcards.project).input_fasta
+    output:
+        input_fasta_fixed = "_data/antigene_search/{project}/{project}.{translation_mode}.fixed.fasta"
+    singularity: 
+        "workflow/containers/image/python.3.12.2.debian.sif"
+    shell:
+        """
+        python ./workflow/shell/fix_fasta_headers.py \
+            --input {input.input_fasta} \
+            --output {output.input_fasta_fixed}
+        """
+
+rule translate:
+    input:
+        input_fasta_fixed = "_data/antigene_search/{project}/{project}.{translation_mode}.fixed.fasta"
     output:
         aminoacid_fasta = temp("_data/antigene_search/{project}/{project}.{translation_mode}.aminoacid.fasta")
     params:
@@ -65,7 +79,7 @@ rule translate:
     shell:
         '''
         time {params.orffinder_executable} \
-            -in {input.input_fasta} \
+            -in {input.input_fasta_fixed} \
             -out {output.aminoacid_fasta} \
             -s {params.translation_mode} -ml 30 -strand plus
         '''
