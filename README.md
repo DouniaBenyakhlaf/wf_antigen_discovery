@@ -69,7 +69,3 @@ wf_antigen_discovery/
 │   └── image/             # Pre-built .sif container images
 └── _data/                 # All outputs (created at runtime)
 ```
-
-## Contact
-
-For questions, contact the bioinformatics team. For wetlab protocol questions (HLA pulldown, mass spec acquisition), refer to the wetlab SOP document.
