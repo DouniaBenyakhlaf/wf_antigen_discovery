@@ -60,10 +60,11 @@ rule translate:
     output:
         aminoacid_fasta = temp("_data/antigene_search/{project}/{project}.{translation_mode}.aminoacid.fasta")
     params:
-        translation_mode = lambda wildcards: 1 if wildcards.translation_mode == 'start_to_stop' else 2
+        translation_mode = lambda wildcards: 1 if wildcards.translation_mode == 'start_to_stop' else 2,
+        orffinder_executable = config["orffinder"]
     shell:
         '''
-        time ./workflow/shell/wf_antigene_search_antigenes/ORFfinder \
+        time {params.orffinder_executable} \
             -in {input.input_fasta} \
             -out {output.aminoacid_fasta} \
             -s {params.translation_mode} -ml 30 -strand plus
@@ -79,7 +80,7 @@ rule add_PE:
         "workflow/containers/image/python.3.12.2.debian.sif"
     shell:
         '''
-        python ./workflow/shell/wf_antigene_search_antigenes/add_PE.py \
+        python ./workflow/shell/add_PE.py \
             --input {input.aminoacid_fasta} \
             --output {output.aminoacid_fasta_PE_changed} \
             --verbose
@@ -118,7 +119,7 @@ rule run_Fragpipe:
     input:
         database_for_msfragger = "_data/antigene_search/{project}/final_msfragger_database.{project}.{translation_mode}.fasta",
         immunopeptidomics_data = lambda wildcarsearch: get_search(wildcarsearch.project).immunopeptidomics_data,
-        workflow_template = "workflow/shell/wf_antigene_search_antigenes/template.workflow"
+        workflow_template = "workflow/shell/template.workflow"
     output:
         workflow = "_data/antigene_search/{project}/{project}.{translation_mode}.workflow",
         psm_tsv = "_data/antigene_search/{project}/fragpipe_workdir.{project}.{translation_mode}/{project}/psm.tsv"
@@ -144,7 +145,7 @@ rule run_Fragpipe:
         ls {input.immunopeptidomics_data} | awk -v proj="{params.project}" -v ipd="{input.immunopeptidomics_data}" \
             '{{print ipd "/" $0 "\t" proj "\t\tDDA"}}' > "_data/antigene_search/{params.project}/{params.project}.manifest"
         time /fragpipe_bin/fragPipe-22.0/fragpipe/bin/fragpipe --headless \
-            --config-tools-folder workflow/shell/wf_antigene_search_antigenes \
+            --config-tools-folder workflow/shell/ \
             --workflow {output.workflow} \
             --manifest "_data/antigene_search/{params.project}/{params.project}.manifest" \
             --workdir {params.fragpipe_workdir} > /dev/null
@@ -192,7 +193,7 @@ rule fp_output_postprocessing:
     shell:
         '''
         hlas_line=$(<{input.hlas})
-        python ./workflow/shell/wf_antigene_search_antigenes/fp_output_post_processing.py \
+        python ./workflow/shell//fp_output_post_processing.py \
             --input_tsv {input.psm_tsv} \
             --input_xls {input.xls} \
             --sample {params.project} \

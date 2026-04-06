@@ -6,5 +6,5 @@ SEARCHES.append(AntigeneSearch(project="example",
 '''
 SEARCHES.append(AntigeneSearch(project="EPS_DDA_MHCI_GRU1",
                                 input_fasta="/mnt/raid0/EPS/EPS_extra_genes.index_specific.groupby_index.fasta",
-                                hla_txt="/mnt/raid0/EPS/data/HLAs/GRU1_HLAs.txt",
+                                hla_txt="/mnt/raid0/EPS/data/HLAs/GRU_HLAs.txt",
                                 immunopeptidomics_data="/mnt/raid0/EPS/data/Immunopeptidomics/IGR_data_Sophie/DDA/MHC-I/VFD3924.raw"))

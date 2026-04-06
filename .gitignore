@@ -4,3 +4,5 @@ shell/MSFragger-4.1/*
 *.sif
 shell/ORFfinder
 *.log
+.snakemake/*
+_data/*
