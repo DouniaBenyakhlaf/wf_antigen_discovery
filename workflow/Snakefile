@@ -1,67 +1,56 @@
+include: f"profiles/{config['todo']}/todo.py"
+
 assert "MAX_RAM_MB" in config, "'MAX_RAM_MB' not in config"
 MAX_RAM_MB = config["MAX_RAM_MB"]
 
-DATASETS = []
+SEARCHES = []
 
 wildcard_constraints:
     translation_mode = "start_to_stop|stop_to_stop",
 
 
-class Antigenes:
+class AntigeneSearch:
     def __init__(
                     self,
-                    project,
+                    project,               # name of the run
                     input_fasta,           # hardcoded path to input fasta
-                    hla_txt,               # required: path to HLA alleles text file
-                    translation_modes=None,
-                    immunopeptidomics_data=None,
-                    fdr_for_ip=0.01,
-                    chunk_size_assembly=50,
+                    hla_txt,               # required: path to HLA alleles text file (also hardcoded)
+                    translation_mode='start_to_stop',
+                    immunopeptidomics_data,               # required: path to immunopeptidomics data (also hardcoded)
+                    fdr_for_ip=0.01               #the default FDR value is 1%
                 ):
         self.project = project
         self.input_fasta = input_fasta
         self.hla_txt = hla_txt
-        self.translation_modes = translation_modes or ['start_to_stop']
+        self.translation_mode = translation_mode
         self.immunopeptidomics_data = immunopeptidomics_data
         self.fdr_for_ip = fdr_for_ip
-        self.chunk_size_assembly = chunk_size_assembly
-
-        if self.hla_txt is None:
-            raise ValueError(f"hla_txt must be provided for project '{self.project}'")
 
 
-def get_dataset(project):
-    for ds in DATASETS:
-        if ds.project == project:
-            return ds
-    raise ValueError(f"No dataset found for project '{project}'")
-
-
-if "todo" in config and "current_pipeline" in config and config['current_pipeline'] == 'wf_personalized_antigenes':
-    include: f"profiles/{config['todo']}/todo.py"
+def get_search(project):
+    for search in SEARCHES:
+        if search.project == project:
+            return search
+    raise ValueError(f"No search found for project '{project}'")
 
 
 rule all:
     input:
         database_for_msfragger = [
-            f"_data/personalized/{ds.project}/final_msfragger_database.{ds.project}.{translation_mode}.fasta"
-            for ds in DATASETS
-            for translation_mode in ds.translation_modes
+            f"_data/personalized/{search.project}/final_msfragger_database.{search.project}.{translation_mode}.fasta"
+            for search in SEARCHES
         ],
         psm_tsv = [
-            f"_data/personalized/{ds.project}/fragpipe_workdir.{ds.project}.{translation_mode}/{ds.project}/psm.tsv"
-            for ds in DATASETS
-            for translation_mode in ds.translation_modes
+            f"_data/personalized/{search.project}/fragpipe_workdir.{search.project}.{translation_mode}/{search.project}/psm.tsv"
+            for search in SEARCHES
         ],
         xls = [
-            f"_data/personalized/{ds.project}/fragpipe_postprocessing/{ds.project}.{translation_mode}.NetMHCpan_out.xls"
-            for ds in DATASETS
-            for translation_mode in ds.translation_modes
+            f"_data/personalized/{search.project}/fragpipe_postprocessing/{search.project}.{translation_mode}.NetMHCpan_out.xls"
+            for search in SEARCHES
         ],
         csv = [
-            f"_data/personalized/{ds.project}/fragpipe_postprocessing/Summary.{ds.project}.{translation_mode}.csv"
-            for ds in DATASETS
-            for translation_mode in ds.translation_modes
+            f"_data/personalized/{search.project}/fragpipe_postprocessing/Summary.{search.project}.{translation_mode}.csv"
+            for search in SEARCHES
         ]
 
 
@@ -128,7 +117,7 @@ rule construct_database:
 rule run_Fragpipe:
     input:
         database_for_msfragger = "_data/personalized/{project}/final_msfragger_database.{project}.{translation_mode}.fasta",
-        immunopeptidomics_data = lambda wildcards: get_dataset(wildcards.project).immunopeptidomics_data,
+        immunopeptidomics_data = lambda wildcarsearch: get_dataset(wildcarsearch.project).immunopeptidomics_data,
         workflow_template = "workflow/shell/wf_personalized_antigenes/template.workflow"
     output:
         workflow = "_data/personalized/{project}/{project}.{translation_mode}.workflow",
@@ -137,10 +126,10 @@ rule run_Fragpipe:
         project = lambda wildcards: wildcards.project,
         fdr = lambda wildcards: get_dataset(wildcards.project).fdr_for_ip,
         fragpipe_workdir = "_data/personalized/{project}/fragpipe_workdir.{project}.{translation_mode}"
-    threads:
+    threasearch:
         40
     resources:
-        mem_mb = lambda wildcards, attempt, input, threads: min(MAX_RAM_MB, get_size_mb(input.database_for_msfragger) * 20 * threads * attempt**2)
+        mem_mb = lambda wildcards, attempt, input, threasearch: min(MAX_RAM_MB, get_size_mb(input.database_for_msfragger) * 20 * threasearch * attempt**2)
     singularity:
         "workflow/containers/image/fragpipe.22.0.ubuntu.sif"
     group:

@@ -1,0 +1,12 @@
+Bootstrap: docker
+From: fcyucn/fragpipe:22.0
+
+%post
+    # Install locales and generate the required locale
+    apt-get update
+    apt-get install -y locales
+    locale-gen en_US.UTF-8
+    update-locale LANG=en_US.UTF-8
+
+%test
+    /fragpipe_bin/fragPipe-22.0/fragpipe/bin/fragpipe --help || echo "FragPipe is not found!"

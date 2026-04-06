@@ -1,0 +1,15 @@
+Bootstrap: docker
+From: python:3.12.2
+
+%post
+    # # Install Python dependencies
+    pip3 install --no-cache-dir \
+        biopython==1.84 \
+        argparse \
+        pandas==2.2.2 \
+        seaborn==0.13.2 \
+        matplotlib==3.9.2 \
+
+
+%test
+    python --version
