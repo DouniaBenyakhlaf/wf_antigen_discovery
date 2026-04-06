@@ -14,8 +14,8 @@ class AntigeneSearch:
                     self,
                     project,               # name of the run
                     input_fasta,           # hardcoded path to input fasta
-                    hla_txt,               # required: path to HLA alleles text file (also hardcoded)
-                    immunopeptidomics_data,               # required: path to immunopeptidomics data (also hardcoded)
+                    hla_txt,               # path to HLA alleles text file (also hardcoded)
+                    immunopeptidomics_data,               # path to the directory with immunopeptidomics data (also hardcoded)
                     translation_mode='start_to_stop',
                     fdr_for_ip=0.01               #the default FDR value is 1%
                 ):
@@ -142,7 +142,8 @@ rule run_Fragpipe:
     params:
         project = lambda wildcards: wildcards.project,
         fdr = lambda wildcards: get_search(wildcards.project).fdr_for_ip,
-        fragpipe_workdir = "_data/antigene_search/{project}/fragpipe_workdir.{project}.{translation_mode}"
+        fragpipe_workdir = "_data/antigene_search/{project}/fragpipe_workdir.{project}.{translation_mode}",
+        fragpipe_tools_folder = config["fragpipe_tools_folder"]
     threads:
         40
     resources:
@@ -161,10 +162,10 @@ rule run_Fragpipe:
         ls {input.immunopeptidomics_data} | awk -v proj="{params.project}" -v ipd="{input.immunopeptidomics_data}" \
             '{{print ipd "/" $0 "\t" proj "\t\tDDA"}}' > "_data/antigene_search/{params.project}/{params.project}.manifest"
         time /fragpipe_bin/fragPipe-22.0/fragpipe/bin/fragpipe --headless \
-            --config-tools-folder workflow/shell/ \
+            --config-tools-folder {params.fragpipe_tools_folder} \
             --workflow {output.workflow} \
             --manifest "_data/antigene_search/{params.project}/{params.project}.manifest" \
-            --workdir {params.fragpipe_workdir} > /dev/null
+            --workdir {params.fragpipe_workdir}
         '''
 
 

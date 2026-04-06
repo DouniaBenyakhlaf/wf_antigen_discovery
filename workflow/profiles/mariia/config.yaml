@@ -19,3 +19,4 @@ config:
   todo: mariia
   reference_proteome: "/mnt/raid0/HP/uniprotkb_with_isoforms_reviewed_true_AND_model_organ_2024_10_29_PE_changed.fasta"
   orffinder: "/mnt/raid0/personalized_antigen_discovery_2/bioinfo/shared_shell/wf_personalized_antigenes/ORFfinder"
+  fragpipe_tools_folder: "/mnt/raid0/personalized_antigen_discovery_2/bioinfo/shared_shell/wf_personalized_antigenes"

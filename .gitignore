@@ -7,3 +7,4 @@ shell/ORFfinder
 .snakemake/*
 _data/*
 .java/*
+.config/*
