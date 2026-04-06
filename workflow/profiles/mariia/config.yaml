@@ -1,0 +1,20 @@
+# Profile: mariia
+rerun-incomplete: True
+printshellcmds: True
+benchmark-extended: True
+
+# RESOURCES
+core: 40
+resources:
+  - mem_mb=150000
+
+# REPRODUCIBILITY
+use-apptainer: True
+singularity-args: "--bind /mnt/raid0"
+
+# CONFIG
+config:
+  MAX_RAM_MB: 150000
+  MAX_THREADS: 40
+  todo: mariia
+  reference_proteome: "/mnt/raid0/HP/uniprotkb_with_isoforms_reviewed_true_AND_model_organ_2024_10_29_PE_changed.fasta"

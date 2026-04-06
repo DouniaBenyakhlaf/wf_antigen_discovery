@@ -3,3 +3,4 @@ shell/IonQuant-1.10.27/*
 shell/MSFragger-4.1/*
 *.sif
 shell/ORFfinder
+*.log

@@ -446,9 +446,6 @@ def main():
     parser.add_argument('--search_engine', required=True, help='MS peptidomics search engine name')
     parser.add_argument('--fdr', required=True, help='MS peptidomics search engine FDR')
     parser.add_argument('--translation_mode', required=True, help='Wildcard translation_mode for file names')
-    parser.add_argument('--filtering_method', required=True, help='Wildcard filtering_method for file names')
-    parser.add_argument('--group', required=True, help='Wildcard group for file names')
-    parser.add_argument('--method', required=True, help='Wildcard method for file names')
     parser.add_argument('--hla_la_cryptic', required=True, help='A list of cryptic peptides found in benign tissues reported in doi:10.1136/jitc-2020-002071')
     args = parser.parse_args()
     start_time = time.time()
@@ -473,7 +470,7 @@ def main():
     df_final = df_final.fillna(value=columns_to_fillna)
     hlala_cryptic = pd.read_csv(args.hla_la_cryptic)
     df_final['found_in_benign_tissue'] = df_final[df_final['class']=='Non canonical']['seq_clear'].apply(lambda x: x in hlala_cryptic['Sequence'].values)
-    df_final.to_csv(Path(args.output_dir) /f'Summary.{args.sample}_{args.method}.{args.filtering_method}.groupby_{args.group}.{args.translation_mode}.csv', index=False)
+    df_final.to_csv(Path(args.output_dir) /f'Summary.{args.sample}.{args.translation_mode}.csv', index=False)
 
 if __name__ == "__main__":
     main()
