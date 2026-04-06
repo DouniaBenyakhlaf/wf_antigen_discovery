@@ -1,6 +1,8 @@
 assert "MAX_RAM_MB" in config, "'MAX_RAM_MB' not in config"
 MAX_RAM_MB = config["MAX_RAM_MB"]
 
+include: "utils.py"
+
 SEARCHES = []
 
 wildcard_constraints:
