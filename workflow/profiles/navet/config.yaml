@@ -1,0 +1,19 @@
+# Profile: navet
+rerun-incomplete: True
+printshellcmds: True
+benchmark-extended: True
+
+# RESOURCES
+core: 40
+resources:
+  - mem_mb=150000
+
+# REPRODUCIBILITY
+use-apptainer: True
+singularity-args: "--bind /data/NEEDLE,/data/bioinfo/"
+
+# CONFIG
+config:
+  MAX_RAM_MB: 100000
+  MAX_THREADS: 40
+  todo: navet

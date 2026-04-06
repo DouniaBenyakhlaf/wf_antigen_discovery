@@ -1,0 +1,216 @@
+assert "MAX_RAM_MB" in config, "'MAX_RAM_MB' not in config"
+MAX_RAM_MB = config["MAX_RAM_MB"]
+
+DATASETS = []
+
+wildcard_constraints:
+    translation_mode = "start_to_stop|stop_to_stop",
+
+
+class Antigenes:
+    def __init__(
+                    self,
+                    project,
+                    input_fasta,           # hardcoded path to input fasta
+                    hla_txt,               # required: path to HLA alleles text file
+                    translation_modes=None,
+                    immunopeptidomics_data=None,
+                    fdr_for_ip=0.01,
+                    chunk_size_assembly=50,
+                ):
+        self.project = project
+        self.input_fasta = input_fasta
+        self.hla_txt = hla_txt
+        self.translation_modes = translation_modes or ['start_to_stop']
+        self.immunopeptidomics_data = immunopeptidomics_data
+        self.fdr_for_ip = fdr_for_ip
+        self.chunk_size_assembly = chunk_size_assembly
+
+        if self.hla_txt is None:
+            raise ValueError(f"hla_txt must be provided for project '{self.project}'")
+
+
+def get_dataset(project):
+    for ds in DATASETS:
+        if ds.project == project:
+            return ds
+    raise ValueError(f"No dataset found for project '{project}'")
+
+
+if "todo" in config and "current_pipeline" in config and config['current_pipeline'] == 'wf_personalized_antigenes':
+    include: f"profiles/{config['todo']}/todo.py"
+
+
+rule all:
+    input:
+        database_for_msfragger = [
+            f"_data/personalized/{ds.project}/final_msfragger_database.{ds.project}.{translation_mode}.fasta"
+            for ds in DATASETS
+            for translation_mode in ds.translation_modes
+        ],
+        psm_tsv = [
+            f"_data/personalized/{ds.project}/fragpipe_workdir.{ds.project}.{translation_mode}/{ds.project}/psm.tsv"
+            for ds in DATASETS
+            for translation_mode in ds.translation_modes
+        ],
+        xls = [
+            f"_data/personalized/{ds.project}/fragpipe_postprocessing/{ds.project}.{translation_mode}.NetMHCpan_out.xls"
+            for ds in DATASETS
+            for translation_mode in ds.translation_modes
+        ],
+        csv = [
+            f"_data/personalized/{ds.project}/fragpipe_postprocessing/Summary.{ds.project}.{translation_mode}.csv"
+            for ds in DATASETS
+            for translation_mode in ds.translation_modes
+        ]
+
+
+rule translate:
+    input:
+        input_fasta = lambda wildcards: get_dataset(wildcards.project).input_fasta
+    output:
+        aminoacid_fasta = temp("_data/personalized/{project}/{project}.{translation_mode}.aminoacid.fasta")
+    params:
+        translation_mode = lambda wildcards: 1 if wildcards.translation_mode == 'start_to_stop' else 2
+    shell:
+        '''
+        time ./workflow/shell/wf_personalized_antigenes/ORFfinder \
+            -in {input.input_fasta} \
+            -out {output.aminoacid_fasta} \
+            -s {params.translation_mode} -ml 30 -strand plus
+        '''
+
+
+rule add_PE:
+    input:
+        aminoacid_fasta = "_data/personalized/{project}/{project}.{translation_mode}.aminoacid.fasta"
+    output:
+        aminoacid_fasta_PE_changed = temp("_data/personalized/{project}/{project}.{translation_mode}.aminoacid_PEchanged.fasta")
+    singularity:
+        "workflow/containers/image/python.3.12.2.debian.sif"
+    shell:
+        '''
+        python ./workflow/shell/wf_personalized_antigenes/add_PE.py \
+            --input {input.aminoacid_fasta} \
+            --output {output.aminoacid_fasta_PE_changed} \
+            --verbose
+        '''
+
+
+rule construct_database:
+    input:
+        aminoacid_fasta_PE_changed = "_data/personalized/{project}/{project}.{translation_mode}.aminoacid_PEchanged.fasta",
+        uniprot = "_data/uniprot/uniprotkb_with_isoforms_reviewed_true_AND_model_organ_2024_10_29_PE_changed.fasta"
+    output:
+        database_for_msfragger = "_data/personalized/{project}/final_msfragger_database.{project}.{translation_mode}.fasta"
+    params:
+        project = lambda wildcards: wildcards.project
+    singularity:
+        "workflow/containers/image/fragpipe.22.0.ubuntu.sif"
+    group:
+        "fragpipe_steps"
+    shell:
+        '''
+        work_dir=$(pwd)
+        mkdir ./_data/personalized/{params.project}/tmp
+        cd ./_data/personalized/{params.project}/tmp
+        /fragpipe_bin/fragPipe-22.0/fragpipe/tools/Philosopher/philosopher-v5.1.1 workspace --init
+        /fragpipe_bin/fragPipe-22.0/fragpipe/tools/Philosopher/philosopher-v5.1.1 database \
+            --custom $work_dir/{input.aminoacid_fasta_PE_changed} \
+            --add $work_dir/{input.uniprot} \
+            --contam
+        cd $work_dir
+        mv ./_data/personalized/{params.project}/tmp/*.fasta.fas {output.database_for_msfragger}
+        rm -r ./_data/personalized/{params.project}/tmp
+        '''
+
+
+rule run_Fragpipe:
+    input:
+        database_for_msfragger = "_data/personalized/{project}/final_msfragger_database.{project}.{translation_mode}.fasta",
+        immunopeptidomics_data = lambda wildcards: get_dataset(wildcards.project).immunopeptidomics_data,
+        workflow_template = "workflow/shell/wf_personalized_antigenes/template.workflow"
+    output:
+        workflow = "_data/personalized/{project}/{project}.{translation_mode}.workflow",
+        psm_tsv = "_data/personalized/{project}/fragpipe_workdir.{project}.{translation_mode}/{project}/psm.tsv"
+    params:
+        project = lambda wildcards: wildcards.project,
+        fdr = lambda wildcards: get_dataset(wildcards.project).fdr_for_ip,
+        fragpipe_workdir = "_data/personalized/{project}/fragpipe_workdir.{project}.{translation_mode}"
+    threads:
+        40
+    resources:
+        mem_mb = lambda wildcards, attempt, input, threads: min(MAX_RAM_MB, get_size_mb(input.database_for_msfragger) * 20 * threads * attempt**2)
+    singularity:
+        "workflow/containers/image/fragpipe.22.0.ubuntu.sif"
+    group:
+        "fragpipe_steps"
+    shell:
+        '''
+        ls {input.immunopeptidomics_data}
+        mkdir -p {params.fragpipe_workdir}
+        sed -e "s|^database.db-path=.*|database.db-path={input.database_for_msfragger}|" \
+            -e "s|^phi-report.filter=.*|phi-report.filter=--sequential --prot 1 --group --pep {params.fdr}|" \
+            "{input.workflow_template}" > "{output.workflow}"
+        ls {input.immunopeptidomics_data} | awk -v proj="{params.project}" -v ipd="{input.immunopeptidomics_data}" \
+            '{{print ipd "/" $0 "\t" proj "\t\tDDA"}}' > "_data/personalized/{params.project}/{params.project}.manifest"
+        time /fragpipe_bin/fragPipe-22.0/fragpipe/bin/fragpipe --headless \
+            --config-tools-folder workflow/shell/wf_personalized_antigenes \
+            --workflow {output.workflow} \
+            --manifest "_data/personalized/{params.project}/{params.project}.manifest" \
+            --workdir {params.fragpipe_workdir} > /dev/null
+        '''
+
+
+rule run_netMHCpan:
+    input:
+        psm_tsv = "_data/personalized/{project}/fragpipe_workdir.{project}.{translation_mode}/{project}/psm.tsv",
+        hlas = lambda wildcards: get_dataset(wildcards.project).hla_txt
+    output:
+        xls = "_data/personalized/{project}/fragpipe_postprocessing/{project}.{translation_mode}.NetMHCpan_out.xls"
+    params:
+        project = lambda wildcards: wildcards.project
+    singularity:
+        "workflow/containers/image/netmhcpan.4.1.ubuntu.sif"
+    shell:
+        '''
+        mkdir -p _data/personalized/{params.project}/fragpipe_postprocessing
+        hlas_line=$(<{input.hlas})
+        python3.6 ./workflow/shell/wf_personalized_antigenes/create_pep_file.py \
+            --input {input.psm_tsv} \
+            --output _data/personalized/{params.project}/fragpipe_postprocessing/{params.project}.pep
+        /usr/local/bin/netMHCpan-4.1/netMHCpan -a $hlas_line \
+            -p _data/personalized/{params.project}/fragpipe_postprocessing/{params.project}.pep \
+            -xls -xlsfile {output.xls} > /dev/null
+        '''
+
+
+rule fp_output_postprocessing:
+    input:
+        psm_tsv = "_data/personalized/{project}/fragpipe_workdir.{project}.{translation_mode}/{project}/psm.tsv",
+        hlas = lambda wildcards: get_dataset(wildcards.project).hla_txt,
+        xls = "_data/personalized/{project}/fragpipe_postprocessing/{project}.{translation_mode}.NetMHCpan_out.xls",
+        hla_la_cryptic = "_data/HLA_ligand_atlas/HLA_la_reported_cryptic_peptides.csv"
+    output:
+        csv = "_data/personalized/{project}/fragpipe_postprocessing/Summary.{project}.{translation_mode}.csv"
+    params:
+        project = lambda wildcards: wildcards.project,
+        fdr = lambda wildcards: get_dataset(wildcards.project).fdr_for_ip,
+        output_folder = lambda wildcards: f"_data/personalized/{wildcards.project}/fragpipe_postprocessing/",
+        translation_mode = lambda wildcards: wildcards.translation_mode,
+    singularity:
+        "workflow/containers/image/python.3.12.2.debian.sif"
+    shell:
+        '''
+        hlas_line=$(<{input.hlas})
+        python ./workflow/shell/wf_personalized_antigenes/fp_output_post_processing.py \
+            --input_tsv {input.psm_tsv} \
+            --input_xls {input.xls} \
+            --sample {params.project} \
+            --hla $hlas_line \
+            --output_dir {params.output_folder} \
+            --search_engine Fragpipe \
+            --fdr {params.fdr} \
+            --translation_mode {params.translation_mode} \
+            --hla_la_cryptic {input.hla_la_cryptic} > /dev/null
+        '''
