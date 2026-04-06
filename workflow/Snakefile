@@ -58,7 +58,7 @@ rule fix_fasta_header:
     input:
         input_fasta = lambda wildcards: get_search(wildcards.project).input_fasta
     output:
-        input_fasta_fixed = "_data/antigene_search/{project}/{project}.{translation_mode}.fixed.fasta"
+        input_fasta_fixed = "_data/antigene_search/{project}/{project}.fixed.fasta"
     singularity: 
         "workflow/containers/image/python.3.12.2.debian.sif"
     shell:
@@ -70,7 +70,7 @@ rule fix_fasta_header:
 
 rule translate:
     input:
-        input_fasta_fixed = "_data/antigene_search/{project}/{project}.{translation_mode}.fixed.fasta"
+        input_fasta_fixed = "_data/antigene_search/{project}/{project}.fixed.fasta"
     output:
         aminoacid_fasta = temp("_data/antigene_search/{project}/{project}.{translation_mode}.aminoacid.fasta")
     params:
@@ -121,7 +121,7 @@ rule construct_database:
         /fragpipe_bin/fragPipe-22.0/fragpipe/tools/Philosopher/philosopher-v5.1.1 workspace --init
         /fragpipe_bin/fragPipe-22.0/fragpipe/tools/Philosopher/philosopher-v5.1.1 database \
             --custom $work_dir/{input.aminoacid_fasta_PE_changed} \
-            --add $work_dir/{input.uniprot} \
+            --add {input.uniprot} \
             --contam
         cd $work_dir
         mv ./_data/antigene_search/{params.project}/tmp/*.fasta.fas {output.database_for_msfragger}
@@ -132,7 +132,7 @@ rule construct_database:
 rule run_Fragpipe:
     input:
         database_for_msfragger = "_data/antigene_search/{project}/final_msfragger_database.{project}.{translation_mode}.fasta",
-        immunopeptidomics_data = lambda wildcarsearch: get_search(wildcarsearch.project).immunopeptidomics_data,
+        immunopeptidomics_data = lambda wildcards: get_search(wildcards.project).immunopeptidomics_data,
         workflow_template = "workflow/shell/template.workflow"
     output:
         workflow = "_data/antigene_search/{project}/{project}.{translation_mode}.workflow",
@@ -180,7 +180,7 @@ rule run_netMHCpan:
         '''
         mkdir -p _data/antigene_search/{params.project}/fragpipe_postprocessing
         hlas_line=$(<{input.hlas})
-        python3.6 ./workflow/shell/wf_antigene_search_antigenes/create_pep_file.py \
+        python3.6 ./workflow/shell/create_pep_file.py \
             --input {input.psm_tsv} \
             --output _data/antigene_search/{params.project}/fragpipe_postprocessing/{params.project}.pep
         /usr/local/bin/netMHCpan-4.1/netMHCpan -a $hlas_line \
@@ -207,7 +207,7 @@ rule fp_output_postprocessing:
     shell:
         '''
         hlas_line=$(<{input.hlas})
-        python ./workflow/shell//fp_output_post_processing.py \
+        python ./workflow/shell/fp_output_post_processing.py \
             --input_tsv {input.psm_tsv} \
             --input_xls {input.xls} \
             --sample {params.project} \
