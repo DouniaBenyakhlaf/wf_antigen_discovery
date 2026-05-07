@@ -32,10 +32,14 @@ The main steps are:
 ## Quick start
 
 1. Clone the repository and navigate to it.
-2. Copy an existing profile folder (e.g. `workflow/profiles/mariia`) and rename it.
-3. Edit `config.yaml` in your new profile to set your resource limits and file paths.
-4. Edit `todo.py` in your new profile to define your sample(s).
-5. Run the workflow:
+2. Build singularity images in containers
+   ```
+   singularity build image/image_name.sif def/image_name.def
+   ```
+4. Copy an existing profile folder (e.g. `workflow/profiles/mariia`) and rename it.
+5. Edit `config.yaml` in your new profile to set your resource limits and file paths.
+6. Edit `todo.py` in your new profile to define your sample(s).
+7. Run the workflow:
    ```
    snakemake --profile workflow/profiles/<your_profile>
    ```
