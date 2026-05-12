@@ -32,19 +32,20 @@ The main steps are:
 1. Clone the repository and navigate to it.
 2. Build singularity images in containers
    ```
-singulariy build image/fragpipe.22.0.ubuntu.sif  def/fragpipe.22.0.ubuntu.def
-singularity build image/netmhcpan.4.1.ubuntu.sif  def/netmhcpan.4.1.ubuntu.def
-singularity build image/python.3.12.2.debian.sif  def/python.3.12.2.debian.def
+   singulariy build image/fragpipe.22.0.ubuntu.sif  def/fragpipe.22.0.ubuntu.def
+   singularity build image/netmhcpan.4.1.ubuntu.sif  def/netmhcpan.4.1.ubuntu.def
+   singularity build image/python.3.12.2.debian.sif  def/python.3.12.2.debian.def
    ```
 3. Download Fragpipe dependencies at:
-http://msfragger-upgrader.nesvilab.org/upgrader/
-https://msfragger.arsci.com/ionquant/
-https://msfragger-upgrader.nesvilab.org/diatracer/
-or run containers/def/fragpipe22.0.dependencies.bash
-4. Copy an existing profile folder (e.g. `workflow/profiles/mariia`) and rename it.
-5. Edit `config.yaml` in your new profile to set your resource limits and file paths.
-6. Edit `todo.py` in your new profile to define your sample(s).
-7. Run the workflow:
+   http://msfragger-upgrader.nesvilab.org/upgrader/
+   https://msfragger.arsci.com/ionquant/
+   https://msfragger-upgrader.nesvilab.org/diatracer/
+   
+   or run containers/def/fragpipe22.0.dependencies.bash
+5. Copy an existing profile folder (e.g. `workflow/profiles/mariia`) and rename it.
+6. Edit `config.yaml` in your new profile to set your resource limits and file paths.
+7. Edit `todo.py` in your new profile to define your sample(s).
+8. Run the workflow:
    ```
    snakemake --profile workflow/profiles/<your_profile>
    ```
