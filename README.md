@@ -16,10 +16,8 @@ The main steps are:
 
 ## Requirements
 
-- Linux system (tested on Ubuntu 22.04)
 - Snakemake >= 7
 - Apptainer (Singularity) — for containerized execution
-- At least 150 GB RAM recommended
 - All tool containers are pre-built and located in `containers/image/`
 
 ## Input files you need to provide
