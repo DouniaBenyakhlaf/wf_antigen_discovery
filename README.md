@@ -49,6 +49,12 @@ The main steps are:
    ```
    snakemake --profile workflow/profiles/<your_profile>
    ```
+### Example
+
+Example data is provided for you to test the pipeline at example. You need to download spectral  files from the link in example/readme.txt and run the workflow
+   ```
+   snakemake --profile workflow/profiles/mariia
+   ```
 
 ## Output
 
