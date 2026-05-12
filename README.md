@@ -4,14 +4,14 @@
 
 ## What does this workflow do?
 
-This pipeline takes a set of non-canonical (neotranscript) DNA sequences and immunopeptidomics mass spectrometry data from a patient sample, and identifies which non-canonical peptides are actually presented on that patient's MHC molecules. In plain terms: it helps discover tumor-specific antigens that could be targeted by the immune system.
+This pipeline takes a set of RNA sequences and immunopeptidomics mass spectrometry data, and identifies peptides from  the query RNA .fasta translation are actually presented on that patient's MHC molecules. In plain terms: it helps discover tumor-specific antigens that could be targeted by the immune system.
 
 The main steps are:
 
-- **Translation:** Non-canonical transcript sequences are translated into all possible protein sequences using ORFfinder.
-- **Database construction:** The translated proteins are combined with a reference human proteome (UniProt) to build a custom search database.
-- **Mass spec search:** Patient immunopeptidomics data (HLA pulldown + mass spectrometry) is searched against the database using FragPipe/MSFragger.
-- **MHC binding prediction:** Identified peptides are scored for binding to the patient's specific HLA alleles using NetMHCpan.
+- **Translation:** Query RNA .fasta is translated into all possible protein sequences using ORFfinder.
+- **Database construction:** The translation result is concatenated with a reference human proteome (UniProt) to build a custom search database.
+- **Mass spec search:** Immunopeptidomics data (HLA pulldown + mass spectrometry) is searched against the database using FragPipe/MSFragger.
+- **MHC binding prediction:** Identified peptides are scored for binding to the sample specific HLA alleles using NetMHCpan.
 - **Postprocessing:** Results are filtered, annotated against the HLA Ligand Atlas, and summarized into a final report.
 
 ## Requirements
@@ -22,7 +22,7 @@ The main steps are:
 
 ## Input files you need to provide
 
-- **Neotranscript FASTA:** DNA sequences of non-canonical transcripts, one per sample.
+- **Set of query RNA sequences:** RNA .fasta
 - **HLA alleles file:** A plain text file with the patient's HLA alleles, formatted for NetMHCpan (e.g. `HLA-A01:01,HLA-B07:02`).
 - **Immunopeptidomics data:** A directory containing `.raw` mass spectrometry files from an HLA pulldown experiment.
 - **Reference proteome:** A reviewed UniProt FASTA with PE tags (path set in config).
