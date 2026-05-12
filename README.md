@@ -16,10 +16,8 @@ The main steps are:
 
 ## Requirements
 
-- Linux system (tested on Ubuntu 22.04)
 - Snakemake >= 7
 - Apptainer (Singularity) — for containerized execution
-- At least 150 GB RAM recommended
 - All tool containers are pre-built and located in `containers/image/`
 
 ## Input files you need to provide
@@ -34,8 +32,17 @@ The main steps are:
 1. Clone the repository and navigate to it.
 2. Build singularity images in containers
    ```
-   singularity build image/image_name.sif def/image_name.def
+singulariy build image/fragpipe.22.0.ubuntu.sif  def/fragpipe.22.0.ubuntu.def
+singularity build image/netmhcpan.4.1.ubuntu.sif  def/netmhcpan.4.1.ubuntu.def
+singularity build image/python.3.12.2.debian.sif  def/python.3.12.2.debian.def
    ```
+3. Download Fragpipe dependencies at:
+http://msfragger-upgrader.nesvilab.org/upgrader/
+https://msfragger.arsci.com/ionquant/
+https://msfragger-upgrader.nesvilab.org/diatracer/
+
+or run containers/def/fragpipe22.0.dependencies.bash
+
 4. Copy an existing profile folder (e.g. `workflow/profiles/mariia`) and rename it.
 5. Edit `config.yaml` in your new profile to set your resource limits and file paths.
 6. Edit `todo.py` in your new profile to define your sample(s).
