@@ -148,6 +148,7 @@ rule run_Fragpipe:
         40
     resources:
         mem_mb = lambda wildcards, attempt, input, threads: min(MAX_RAM_MB, get_size_mb(input.database_for_msfragger) * 20 * threads * attempt**2)
+        runtime = 120,
     singularity:
         "workflow/containers/image/fragpipe.22.0.ubuntu.sif"
     group:
