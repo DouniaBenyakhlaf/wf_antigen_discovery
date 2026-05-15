@@ -18,7 +18,7 @@ default-resources:
 
 # REPRODUCIBILITY
 use-apptainer: True
-singularity-args: "--bind /mnt/beegfs 
+singularity-args: "--bind /mnt/beegfs --bind /mnt/beegfs/home/dbenyakh/tmp:/tmp --bind /mnt/beegfs/home/dbenyakh/tmp:/fragpipe_bin/fragPipe-22.0/fragpipe/cache"
 
 # CONFIG
 config:
