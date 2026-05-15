@@ -143,17 +143,21 @@ rule run_Fragpipe:
         project = lambda wildcards: wildcards.project,
         fdr = lambda wildcards: get_search(wildcards.project).fdr_for_ip,
         fragpipe_workdir = "_data/antigene_search/{project}/fragpipe_workdir.{project}.{translation_mode}",
-        fragpipe_tools_folder = config["fragpipe_tools_folder"]
+        fragpipe_tools_folder = config["fragpipe_tools_folder"],
+        tmp_dir = "tmp"
     threads:
         40
     resources:
-        mem_mb = lambda wildcards, attempt, input, threads: min(MAX_RAM_MB, get_size_mb(input.database_for_msfragger) * 20 * threads * attempt**2)
+        mem_mb = lambda wildcards, attempt: min(MAX_RAM_MB, 96000 + (attempt * 32000)),
+        runtime = 120,
     singularity:
         "workflow/containers/image/fragpipe.22.0.ubuntu.sif"
     group:
         "fragpipe_steps"
     shell:
         '''
+        mkdir -p {params.tmp_dir}
+        export _JAVA_OPTIONS="-Djava.io.tmpdir=/tmp"
         ls {input.immunopeptidomics_data}
         mkdir -p {params.fragpipe_workdir}
         sed -e "s|^database.db-path=.*|database.db-path={input.database_for_msfragger}|" \
@@ -177,6 +181,8 @@ rule run_netMHCpan:
         xls = "_data/antigene_search/{project}/fragpipe_postprocessing/{project}.{translation_mode}.NetMHCpan_out.xls"
     params:
         project = lambda wildcards: wildcards.project
+    resources:
+        runtime = 120
     singularity:
         "workflow/containers/image/netmhcpan.4.1.ubuntu.sif"
     shell:

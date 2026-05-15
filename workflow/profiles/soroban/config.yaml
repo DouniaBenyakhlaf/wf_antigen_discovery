@@ -1,0 +1,30 @@
+# Profile: soroban
+rerun-incomplete: True
+printshellcmds: True
+benchmark-extended: True
+keep-going: True
+
+# RESOURCES (SLURM)
+executor: slurm
+jobs: 100              
+retries: 1             
+
+default-resources:
+  slurm_account: dev   
+  slurm_partition: dev 
+  runtime: 120        
+  mem_mb: 4000         
+  cpus_per_task: 1
+
+# REPRODUCIBILITY
+use-apptainer: True
+singularity-args: "--bind /mnt/beegfs --bind /mnt/beegfs/home/dbenyakh/tmp:/tmp --bind /mnt/beegfs/home/dbenyakh/tmp:/fragpipe_bin/fragPipe-22.0/fragpipe/cache"
+
+# CONFIG
+config:
+  MAX_RAM_MB: 150000
+  MAX_THREADS: 40
+  todo: soroban
+  reference_proteome: "/mnt/beegfs/home/dbenyakh/stagein/wf_antigen_discovery_test/uniprotkb_with_isoforms_reviewed_true_AND_model_organ_2024_10_29.fasta"
+  orffinder: "/mnt/beegfs/home/dbenyakh/persistent/tools/ORFfinder"
+  fragpipe_tools_folder: "/mnt/beegfs/home/dbenyakh/persistent/tools/fragpipe_dependencies"
