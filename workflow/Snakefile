@@ -163,7 +163,7 @@ rule run_Fragpipe:
         sed -e "s|^database.db-path=.*|database.db-path={input.database_for_msfragger}|" \
             -e "s|^phi-report.filter=.*|phi-report.filter=--sequential --prot 1 --group --pep {params.fdr}|" \
             "{input.workflow_template}" > "{output.workflow}"
-        ls {input.immunopeptidomics_data} | awk -v proj="{params.project}" -v ipd="{input.immunopeptidomics_data}" \
+        ls {input.immunopeptidomics_data} | grep '\.mzML$' | awk -v proj="{params.project}" -v ipd="{input.immunopeptidomics_data}" \
             '{{print ipd "/" $0 "\t" proj "\t\tDDA"}}' > "_data/antigene_search/{params.project}/{params.project}.manifest"
         time /fragpipe_bin/fragPipe-22.0/fragpipe/bin/fragpipe --headless \
             --config-tools-folder {params.fragpipe_tools_folder} \
