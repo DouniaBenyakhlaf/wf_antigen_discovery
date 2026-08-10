@@ -257,7 +257,8 @@ rule run_GibbsCluster:
         pep = "_data/antigene_search/{project}/fragpipe_postprocessing/{project}.{translation_mode}.pep",
         hlas = lambda wildcards: get_search(wildcards.project).hla_txt
     output:
-        gibbs_csv = "_data/antigene_search/{project}/fragpipe_postprocessing/{project}.{translation_mode}.GibbsCluster_out.csv"
+        gibbs_summary = "_data/antigene_search/{project}/fragpipe_postprocessing/{project}.{translation_mode}.GibbsCluster_summary.txt",
+        gibbs_ds = "_data/antigene_search/{project}/fragpipe_postprocessing/{project}.{translation_mode}.GibbsCluster_out.csv"
     params:
         project = lambda wildcards: wildcards.project
     threads:
@@ -270,6 +271,10 @@ rule run_GibbsCluster:
     shell:
         '''
         export LANG=C
+        work_dir=$(pwd)
+        tmp_dir=$(mktemp -d ./_data/antigene_search/{params.project}/tmp.XXXXXX)
+        cd "$tmp_dir"
+
         hlas_line=$(<{input.hlas})
         num_hlas=$(awk -F',' '{{print NF}}' <<< "$hlas_line")
         echo "$num_hlas"
@@ -277,7 +282,14 @@ rule run_GibbsCluster:
         /opt/gibbscluster/gibbscluster \
             -g $num_hlas \
             -T \
-            -f {input.pep} > {output.gibbs_csv}
+            -f "$work_dir/{input.pep}" > "$work_dir/{output.gibbs_summary}"
+
+        session_dir=$(find . -maxdepth 1 -type d | grep -E './[0-9]+$' | head -1)
+        cp "$session_dir/res/gibbs.${{num_hlas}}g.ds.out" \
+        "$work_dir/{output.gibbs_ds}"
+
+        cd "$work_dir"
+        rm -rf "$tmp_dir"
         '''
 
 rule run_MHCmotifDecon:
