@@ -26,7 +26,7 @@ From: ubuntu:22.04
 %files
 
     shared_shell/wf_personalized_antigenes/mhcmotifdecon-1.2c.ALL/mhcmotifdecon-1.2 /opt/mhcmotifdecon
-    shared_shell/wf_personalized_antigenes/netMHCpan-4.2cstatic.Linux/netMHCpan-4.2 /opt/netMHCpan
+    shared_shell/wf_personalized_antigenes/netMHCpan-4.2cstatic.Linux/netMHCpan-4.2 /opt/netMHCpan # Using NetMHCpan 4.2d instead of the originally referenced 4.2c
     shared_shell/wf_personalized_antigenes/netMHCIIpan-4.3jstatic.Linux/netMHCIIpan-4.3 /opt/netMHCIIpan
     shared_shell/wf_personalized_antigenes/gibbscluster-2.0f.Linux/gibbscluster-2.0 /opt/gibbscluster
 
@@ -50,6 +50,7 @@ From: ubuntu:22.04
         perl \
         gawk \
         ghostscript \
+        bsdextrautils \
         libfreetype6-dev \
         libpng-dev
 
@@ -92,6 +93,12 @@ From: ubuntu:22.04
     sed -i '1 s|python2\.7|python2|' "$SEQ2LOGO_FILE"
     chmod +x "$SEQ2LOGO_FILE"
 
+    
+    chmod +x /opt/mhcmotifdecon/MHCMotifDecon
+    chmod +x /opt/mhcmotifdecon/bin/Linux_x86_64/bin/*
+    chmod +x /opt/mhcmotifdecon/bin/ma_correlations_plot/plot_correlation_matrices
+    chmod +x /opt/mhcmotifdecon/bin/ma_logos_plot/plot_logos
+    chmod +x /opt/mhcmotifdecon/bin/seq2logo-2.1/seq2logo
 
     #
     # NetMHCpan
