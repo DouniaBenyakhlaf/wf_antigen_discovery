@@ -23,7 +23,7 @@ class AntigeneSearch:
                     workflow_template=None,
                     fdr_for_ip=0.01,               #the default FDR value is 1%
                     grouped_fdr=True,
-                    mhc_tool="all"
+                    mhc_tool=["all"]
                 ):
         assert (input_fasta is None) != (input_aa_fasta is None), \
             f"[{project}] Provide exactly one of input_fasta (nt) or input_aa_fasta (aa)"
