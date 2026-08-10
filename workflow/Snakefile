@@ -262,6 +262,8 @@ rule run_GibbsCluster:
         project = lambda wildcards: wildcards.project
     threads:
         1
+    resources:
+        runtime=60
     benchmark: "_data/benchmark/run_GibbsCluster/{project}.{translation_mode}.benchmark.txt",
     singularity:
         "workflow/containers/image/mhc_tools.sif"
@@ -289,7 +291,8 @@ rule run_MHCmotifDecon:
         outdir=lambda wc: f"_data/antigene_search/{wc.project}/fragpipe_postprocessing/run_{wc.project}.{wc.translation_mode}"
     threads: 1
     resources:
-        mhcmotifdecon=1
+        mhcmotifdecon=1,
+        runtime=60
     benchmark:
         "_data/benchmark/run_MHCmotifDecon/{project}.{translation_mode}.benchmark.txt"
     singularity:
