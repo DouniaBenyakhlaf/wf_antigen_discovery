@@ -5,7 +5,7 @@ containers/shared_shell/wf_personalized_antigenes/gibbscluster-2.0f.Linux/*
 containers/shared_shell/wf_personalized_antigenes/mhcmotifdecon-1.2c.ALL/*
 containers/shared_shell/wf_personalized_antigenes/netMHCIIpan-4.3jstatic.Linux/*
 containers/shared_shell/wf_personalized_antigenes/netMHCpan-4.2cstatic.Linux/*
-*.sif
+containers/image/*
 shell/ORFfinder
 containers/shared_shell/*
 *.log
