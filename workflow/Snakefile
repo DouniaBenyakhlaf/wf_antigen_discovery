@@ -285,8 +285,7 @@ rule run_MHCmotifDecon:
         pep="_data/antigene_search/{project}/fragpipe_postprocessing/{project}.{translation_mode}.pep",
         hlas=lambda wildcards: get_search(wildcards.project).hla_txt
     output:
-        motifdecon_csv="_data/antigene_search/{project}/fragpipe_postprocessing/run_{project}.{translation_mode}/data/output.txt",
-        motifdecon_logos="_data/antigene_search/{project}/fragpipe_postprocessing/run_{project}.{translation_mode}/logos.pdf"
+        motifdecon_csv="_data/antigene_search/{project}/fragpipe_postprocessing/run_{project}.{translation_mode}/data/output"
     params:
         outdir=lambda wc: f"_data/antigene_search/{wc.project}/fragpipe_postprocessing/run_{wc.project}.{wc.translation_mode}"
     threads: 1
@@ -326,7 +325,7 @@ rule fp_output_postprocessing:
         ),
         motifdecon_txt = lambda wc: (
             f"_data/antigene_search/{wc.project}/fragpipe_postprocessing/"
-            f"run_{wc.project}.{wc.translation_mode}/data/output.txt"
+            f"run_{wc.project}.{wc.translation_mode}/data/output"
             if any(x in ("all", "motifdecon") for x in get_search(wc.project).mhc_tool)
             else []
         ),
