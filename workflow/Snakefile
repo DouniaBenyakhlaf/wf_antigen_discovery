@@ -301,15 +301,23 @@ rule run_MHCmotifDecon:
         hlas_line=$(<{input.hlas})
 
         rm -rf {params.outdir}/*
-        rm -rf run_{wildcards.project}
+
+        work_dir=$(pwd)
+        tmp_dir=$(mktemp -d "_data/antigene_search/{wildcards.project}/mhcmotifdecon_tmp.XXXXXX")
+
+        cd "$tmp_dir"
 
         /opt/mhcmotifdecon/MHCMotifDecon \
-            -i {input.pep} \
+            -i "$work_dir/{input.pep}" \
             -a "$hlas_line" \
             -n run_{wildcards.project} \
             -c I > /dev/null
-        mv run_{wildcards.project}/* "{params.outdir}"
-        rm -rf run_{wildcards.project}
+
+        mv "run_{wildcards.project}"/* "$work_dir/{params.outdir}"
+
+        cd "$work_dir"
+
+        rm -rf "$tmp_dir"
         '''
 
 rule fp_output_postprocessing:
