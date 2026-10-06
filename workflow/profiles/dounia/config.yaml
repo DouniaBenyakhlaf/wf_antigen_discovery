@@ -6,7 +6,7 @@ keep-going: True
 
 # RESOURCES (SLURM)
 executor: slurm
-jobs: 100             
+jobs: 10          
 retries: 1
 
 default-resources:
