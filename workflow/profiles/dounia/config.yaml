@@ -25,6 +25,6 @@ config:
   MAX_RAM_MB: 150000
   MAX_THREADS: 40
   todo: dounia
-  reference_proteome: "/mnt/beegfs/home/dbenyakh/stagein/wf_antigen_discovery_test/uniprotkb_with_isoforms_reviewed_true_AND_model_organ_2024_10_29.fasta" # swissprot
-  orffinder: "/mnt/beegfs/home/dbenyakh/persistent/tools/ORFfinder" # option without this step. Start with protein sequences
+  reference_proteome: "/mnt/beegfs/home/dbenyakh/stagein/wf_antigen_discovery_test/swissprot_wisoforms_260731.fasta"
+  orffinder: "/mnt/beegfs/home/dbenyakh/persistent/tools/ORFfinder"
   fragpipe_tools_folder: "/mnt/beegfs/home/dbenyakh/persistent/tools/fragpipe_dependencies"
