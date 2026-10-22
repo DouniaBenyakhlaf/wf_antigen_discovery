@@ -3,6 +3,8 @@ MAX_RAM_MB = config["MAX_RAM_MB"]
 
 include: "utils.py"
 
+localrules: copy_raw
+
 SEARCHES = []
 
 wildcard_constraints:
@@ -15,7 +17,7 @@ class AntigeneSearch:
                     self,
                     project,               # name of the run
                     hla_txt,               # path to HLA alleles text file (also hardcoded)
-                    immunopeptidomics_data,               # path to the directory with immunopeptidomics data (also hardcoded)
+                    raw_files,             # list of raw files to copy before running FragPipe
                     input_fasta=None,        # nt fasta (optional if aa_fasta given)
                     input_aa_fasta=None,     # pre-translated aa fasta (optional). For example ORFs called from Riboseq
                     translation_mode='start_to_stop',
@@ -29,7 +31,7 @@ class AntigeneSearch:
             f"[{project}] Provide exactly one of input_fasta (nt) or input_aa_fasta (aa)"
         self.project = project
         self.hla_txt = hla_txt
-        self.immunopeptidomics_data = immunopeptidomics_data
+        self.raw_files = raw_files
         self.input_fasta = input_fasta
         self.input_aa_fasta = input_aa_fasta
         self.translation_mode = translation_mode
@@ -62,8 +64,26 @@ rule all:
         csv = [
             f"_data/antigene_search/{search.project}/fragpipe_postprocessing/Summary.{search.project}.{search.translation_mode}.csv"
             for search in SEARCHES
+        ],
+        cleanup = [
+            f"_data/antigene_search/{search.project}/raw_cleanup.{search.translation_mode}.done"
+            for search in SEARCHES
         ]
 
+rule copy_raw:
+    input:
+        lambda wc: get_search(wc.project).raw_files
+    output:
+        raw_dir = directory("_data/raw/{project}")
+    shell:
+        """
+        mkdir -p {output.raw_dir:q}
+
+        for f in {input:q}; do
+            newname=$(basename "$f" | tr ' ' '_' | tr '()' '__')
+            rsync -avL "$f" "{output.raw_dir}/$newname"
+        done
+        """
 
 rule fix_fasta_header:
     input:
@@ -166,7 +186,7 @@ rule construct_database:
 rule run_Fragpipe:
     input:
         database_for_msfragger = "_data/antigene_search/{project}/final_msfragger_database.{project}.{translation_mode}.fasta",
-        immunopeptidomics_data = lambda wildcards: get_search(wildcards.project).immunopeptidomics_data,
+        raw_dir="_data/raw/{project}",
         workflow_template = lambda wildcards: get_search(wildcards.project).workflow_template
     output:
         workflow = "_data/antigene_search/{project}/{project}.{translation_mode}.workflow",
@@ -193,13 +213,13 @@ rule run_Fragpipe:
         '''
         mkdir -p {params.tmp_dir}
         export _JAVA_OPTIONS="-Djava.io.tmpdir=/tmp"
-        ls {input.immunopeptidomics_data}
+        ls {input.raw_dir}
         mkdir -p {params.fragpipe_workdir}
         sed -e "s|^database.db-path=.*|database.db-path={input.database_for_msfragger}|" \
             -e "s|^phi-report.filter=.*|phi-report.filter=--sequential --prot 1{params.grouped_fdr} --pep {params.fdr}|" \
-            "{input.workflow_template}" > "{output.workflow}"
-        ls {input.immunopeptidomics_data} | awk -v proj="{params.project}" -v ipd="{input.immunopeptidomics_data}" -v dtype="{params.data_type}"\
-            '{{print ipd "/" $0 "\t" proj "\t\t" dtype}}' > "_data/antigene_search/{params.project}/{params.project}.manifest"
+            "{input.workflow_template:q}" > "{output.workflow:q}"
+        ls "$work_dir/{input.raw_dir}"/*.mzML | awk -v proj="{params.project}" -v dtype="{params.data_type}"\
+            '{{print $0 "\t" proj "\t\t" dtype}}' > "_data/antigene_search/{params.project}/{params.project}.manifest"
         time /fragpipe_bin/fragPipe-22.0/fragpipe/bin/fragpipe --headless \
             --config-tools-folder {params.fragpipe_tools_folder} \
             --workflow {output.workflow} \
@@ -385,5 +405,15 @@ rule fp_output_postprocessing:
             --search_engine Fragpipe \
             --fdr {params.fdr} \
             --translation_mode {params.translation_mode} \
-            --hla_la_cryptic {input.hla_la_cryptic}
+            --hla_la_cryptic {input.hla_la_cryptic:q}
         '''
+
+rule cleanup_raw:
+    input:
+        "_data/antigene_search/{project}/fragpipe_postprocessing/Summary.{project}.{translation_mode}.csv"
+    output:
+        touch("_data/antigene_search/{project}/raw_cleanup.{translation_mode}.done")
+    shell:
+        """
+        rm -rf _data/raw/{wildcards.project}
+        """
