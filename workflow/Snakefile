@@ -96,8 +96,8 @@ rule fix_fasta_header:
     shell:
         """
         python ./workflow/shell/fix_fasta_headers.py \
-            --input {input.input_fasta} \
-            --output {output.input_fasta_fixed}
+            --input {input.input_fasta:q} \
+            --output {output.input_fasta_fixed:q}
         """
 
 rule translate_start_to_stop:
@@ -111,8 +111,8 @@ rule translate_start_to_stop:
     shell:
         '''
         time {params.orffinder_executable} \
-            -in {input.input_fasta_fixed} \
-            -out {output.aminoacid_fasta} \
+            -in {input.input_fasta_fixed:q} \
+            -out {output.aminoacid_fasta:q} \
             -s 1 -ml 30 -strand plus
         '''
 
@@ -128,8 +128,8 @@ rule translate_stop_to_stop:
     shell:
         """
         python ./workflow/shell/3_frame_translation.py \
-            --input {input.input_fasta} \
-            --output {output.aminoacid_fasta}
+            --input {input.input_fasta:q} \
+            --output {output.aminoacid_fasta:q}
         """
 
 
@@ -148,8 +148,8 @@ rule add_PE:
     shell:
         '''
         python ./workflow/shell/add_PE.py \
-            --input {input.aminoacid_fasta} \
-            --output {output.aminoacid_fasta_PE_changed} \
+            --input {input.aminoacid_fasta:q} \
+            --output {output.aminoacid_fasta_PE_changed:q} \
             --verbose
         '''
 
@@ -174,11 +174,11 @@ rule construct_database:
         cd ./_data/antigene_search/{params.project}/tmp
         /fragpipe_bin/fragPipe-22.0/fragpipe/tools/Philosopher/philosopher-v5.1.1 workspace --init
         /fragpipe_bin/fragPipe-22.0/fragpipe/tools/Philosopher/philosopher-v5.1.1 database \
-            --custom $work_dir/{input.aminoacid_fasta_PE_changed} \
-            --add {input.uniprot} \
+            --custom $work_dir/{input.aminoacid_fasta_PE_changed:q} \
+            --add {input.uniprot:q} \
             --contam
         cd $work_dir
-        mv ./_data/antigene_search/{params.project}/tmp/*.fasta.fas {output.database_for_msfragger}
+        mv ./_data/antigene_search/{params.project}/tmp/*.fasta.fas {output.database_for_msfragger:q}
         rm -r ./_data/antigene_search/{params.project}/tmp
         '''
 
@@ -222,9 +222,9 @@ rule run_Fragpipe:
             '{{print $0 "\t" proj "\t\t" dtype}}' > "_data/antigene_search/{params.project}/{params.project}.manifest"
         time /fragpipe_bin/fragPipe-22.0/fragpipe/bin/fragpipe --headless \
             --config-tools-folder {params.fragpipe_tools_folder} \
-            --workflow {output.workflow} \
+            --workflow {output.workflow:q} \
             --manifest "_data/antigene_search/{params.project}/{params.project}.manifest" \
-            --workdir {params.fragpipe_workdir}
+            --workdir {params.fragpipe_workdir:q}
         if [ "{params.data_type}" = "DIA" ]; then
             mkdir -p {params.fragpipe_workdir}/{params.project}
             cp {params.fragpipe_workdir}/psm.tsv {params.fragpipe_workdir}/{params.project}/psm.tsv
@@ -246,8 +246,8 @@ rule create_pep_file:
         '''
         mkdir -p _data/antigene_search/{params.project}/fragpipe_postprocessing
         python3.6 ./workflow/shell/create_pep_file.py \
-            --input {input.psm_tsv} \
-            --output {output.pep}
+            --input {input.psm_tsv:q} \
+            --output {output.pep:q}
         '''
 
 rule run_netMHCpan:
@@ -267,9 +267,9 @@ rule run_netMHCpan:
         "workflow/containers/image/mhc_tools.sif"
     shell:
         '''
-        hlas_line=$(<{input.hlas})
+        hlas_line=$(<{input.hlas:q})
         /opt/netMHCpan/netMHCpan -a $hlas_line \
-            -p {input.pep} -xls -xlsfile {output.xls} > /dev/null
+            -p {input.pep:q} -xls -xlsfile {output.xls:q} > /dev/null
         '''
 
 rule run_GibbsCluster:
@@ -295,18 +295,18 @@ rule run_GibbsCluster:
         tmp_dir=$(mktemp -d ./_data/antigene_search/{params.project}/tmp.XXXXXX)
         cd "$tmp_dir"
 
-        hlas_line=$(<{input.hlas})
+        hlas_line=$(<{input.hlas:q})
         num_hlas=$(awk -F',' '{{print NF}}' <<< "$hlas_line")
         echo "$num_hlas"
 
         /opt/gibbscluster/gibbscluster \
             -g $num_hlas \
             -T \
-            -f "$work_dir/{input.pep}" > "$work_dir/{output.gibbs_summary}"
+            -f "$work_dir/{input.pep:q}" > "$work_dir/{output.gibbs_summary:q}"
 
         session_dir=$(find . -maxdepth 1 -type d | grep -E './[0-9]+$' | head -1)
         cp "$session_dir/res/gibbs.${{num_hlas}}g.ds.out" \
-        "$work_dir/{output.gibbs_ds}"
+        "$work_dir/{output.gibbs_ds:q}"
 
         cd "$work_dir"
         rm -rf "$tmp_dir"
@@ -330,7 +330,7 @@ rule run_MHCmotifDecon:
         "workflow/containers/image/mhc_tools.sif"
     shell:
         '''
-        hlas_line=$(<{input.hlas})
+        hlas_line=$(<{input.hlas:q})
 
         rm -rf {params.outdir}/*
 
@@ -340,7 +340,7 @@ rule run_MHCmotifDecon:
         cd "$tmp_dir"
 
         /opt/mhcmotifdecon/MHCMotifDecon \
-            -i "$work_dir/{input.pep}" \
+            -i "$work_dir/{input.pep:q}" \
             -a "$hlas_line" \
             -n run_{wildcards.project} \
             -c I > /dev/null
@@ -382,26 +382,26 @@ rule fp_output_postprocessing:
         "workflow/containers/image/python.3.12.2.debian.sif"
     shell:
         '''
-        hlas_line=$(<{input.hlas})
+        hlas_line=$(<{input.hlas:q})
 
         gibbs_arg=""
-        if [ -n "{input.GibbsCluster_csv}" ]; then
-            gibbs_arg="--GibbsCluster_csv {input.GibbsCluster_csv}"
+        if [ -n "{input.GibbsCluster_csv:q}" ]; then
+            gibbs_arg="--GibbsCluster_csv {input.GibbsCluster_csv:q}"
         fi
 
         motif_arg=""
-        if [ -n "{input.motifdecon_txt}" ]; then
-            motif_arg="--motifdecon_txt {input.motifdecon_txt}"
+        if [ -n "{input.motifdecon_txt:q}" ]; then
+            motif_arg="--motifdecon_txt {input.motifdecon_txt:q}"
         fi
 
         python ./workflow/shell/fp_output_post_processing.py \
-            --input_tsv {input.psm_tsv} \
-            --netMHCpan_xls {input.netMHCpan_xls} \
+            --input_tsv {input.psm_tsv:q} \
+            --netMHCpan_xls {input.netMHCpan_xls:q} \
             $motif_arg \
             $gibbs_arg \
             --sample {params.project} \
             --hla "$hlas_line" \
-            --output_dir {params.output_folder} \
+            --output_dir {params.output_folder:q} \
             --search_engine Fragpipe \
             --fdr {params.fdr} \
             --translation_mode {params.translation_mode} \
