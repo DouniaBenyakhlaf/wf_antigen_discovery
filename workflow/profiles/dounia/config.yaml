@@ -1,30 +1,24 @@
-# Profile: soroban
-rerun-incomplete: True
-printshellcmds: True
-benchmark-extended: True
-keep-going: True
-
-# RESOURCES (SLURM)
+rerun-incomplete: true
+printshellcmds: true
+benchmark-extended: true
+keep-going: true
 executor: slurm
-jobs: 10          
+jobs: 10
 retries: 1
-
 default-resources:
-  slurm_account: dev   
-  slurm_partition: recherche_batch 
-  runtime: 120        
-  mem_mb: 4000         
+  slurm_account: dev
+  slurm_partition: recherche_batch
+  runtime: 120
+  mem_mb: 4000
   cpus_per_task: 1
-
-# REPRODUCIBILITY
-use-apptainer: True
-singularity-args: "--bind /mnt/beegfs --bind /mnt/beegfs/home/dbenyakh/tmp:/tmp --bind /mnt/beegfs/home/dbenyakh/tmp:/fragpipe_bin/fragPipe-22.0/fragpipe/cache"
-
-# CONFIG
+use-apptainer: true
+singularity-args: --bind /mnt/beegfs --bind /mnt/beegfs/home/dbenyakh/tmp:/tmp --bind
+  /mnt/beegfs/home/dbenyakh/tmp:/fragpipe_bin/fragPipe-22.0/fragpipe/cache
 config:
   MAX_RAM_MB: 150000
   MAX_THREADS: 40
   todo: dounia
-  reference_proteome: "/mnt/beegfs/home/dbenyakh/stagein/wf_antigen_discovery_test/swissprot_wisoforms_260731.fasta"
-  orffinder: "/mnt/beegfs/home/dbenyakh/persistent/tools/ORFfinder"
-  fragpipe_tools_folder: "/mnt/beegfs/home/dbenyakh/persistent/tools/fragpipe_dependencies"
+  reference_proteome: /mnt/beegfs/home/dbenyakh/stagein/wf_antigen_discovery_test/swissprot_wisoforms_260731.fasta
+  orffinder: /mnt/beegfs/home/dbenyakh/persistent/tools/ORFfinder
+  fragpipe_tools_folder: /mnt/beegfs/home/dbenyakh/persistent/tools/fragpipe_dependencies
+  csv_data_info: /mnt/beegfs/home/dbenyakh/persistent/wf_antigen_discovery/csv_chunks/chunk_02.csv
