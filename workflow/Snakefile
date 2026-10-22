@@ -211,6 +211,7 @@ rule run_Fragpipe:
         "fragpipe_steps"
     shell:
         '''
+        work_dir=$(pwd)
         mkdir -p {params.tmp_dir}
         export _JAVA_OPTIONS="-Djava.io.tmpdir=/tmp"
         ls {input.raw_dir}
@@ -227,7 +228,7 @@ rule run_Fragpipe:
             --workdir {params.fragpipe_workdir:q}
         if [ "{params.data_type}" = "DIA" ]; then
             mkdir -p {params.fragpipe_workdir}/{params.project}
-            cp {params.fragpipe_workdir}/psm.tsv {params.fragpipe_workdir}/{params.project}/psm.tsv
+            cp "{params.fragpipe_workdir}/psm.tsv" "{params.fragpipe_workdir}/{params.project}/psm.tsv"
         fi
         '''
 
