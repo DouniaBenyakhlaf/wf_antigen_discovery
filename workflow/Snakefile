@@ -52,6 +52,13 @@ def get_search(project):
             return search
     raise ValueError(f"No search found for project '{project}'")
 
+def has_hlas(project):
+    hla_file = get_search(project).hla_txt
+
+    with open(hla_file) as f:
+        hlas = f.read().strip()
+
+    return hlas.replace(",", "") != ""
 
 include: f"profiles/{config['todo']}/todo.py"
 
@@ -357,7 +364,12 @@ rule fp_output_postprocessing:
     input:
         psm_tsv = "_data/antigene_search/{project}/fragpipe_workdir.{project}.{translation_mode}/{project}/psm.tsv",
         hlas = lambda wildcards: get_search(wildcards.project).hla_txt,
-        netMHCpan_xls = "_data/antigene_search/{project}/fragpipe_postprocessing/{project}.{translation_mode}.NetMHCpan_out.xls",
+        netMHCpan_xls = lambda wc: (
+            f"_data/antigene_search/{wc.project}/fragpipe_postprocessing/"
+            f"{wc.project}.{wc.translation_mode}.NetMHCpan_out.xls"
+            if has_hlas(wc.project)
+            else []
+        ),
         GibbsCluster_csv = lambda wc: (
             f"_data/antigene_search/{wc.project}/fragpipe_postprocessing/"
             f"{wc.project}.{wc.translation_mode}.GibbsCluster_out.csv"
@@ -367,7 +379,11 @@ rule fp_output_postprocessing:
         motifdecon_txt = lambda wc: (
             f"_data/antigene_search/{wc.project}/fragpipe_postprocessing/"
             f"run_{wc.project}.{wc.translation_mode}/data/output"
-            if any(x in ("all", "motifdecon") for x in get_search(wc.project).mhc_tool)
+            if (
+                has_hlas(wc.project)
+                and any(x in ("all", "motifdecon")
+                        for x in get_search(wc.project).mhc_tool)
+            )
             else []
         ),
         hla_la_cryptic = "_data/HLA_ligand_atlas/HLA_la_reported_cryptic_peptides.csv"
@@ -385,6 +401,11 @@ rule fp_output_postprocessing:
         '''
         hlas_line=$(<{input.hlas:q})
 
+        netmhc_arg=""
+        if [ -n "{input.netMHCpan_xls}" ]; then
+            netmhc_arg="--netMHCpan_xls {input.netMHCpan_xls:q}"
+        fi
+
         gibbs_arg=""
         if [ -n "{input.GibbsCluster_csv:q}" ]; then
             gibbs_arg="--GibbsCluster_csv {input.GibbsCluster_csv:q}"
@@ -397,7 +418,7 @@ rule fp_output_postprocessing:
 
         python ./workflow/shell/fp_output_post_processing.py \
             --input_tsv {input.psm_tsv:q} \
-            --netMHCpan_xls {input.netMHCpan_xls:q} \
+            $netmhc_arg \
             $motif_arg \
             $gibbs_arg \
             --sample {params.project} \

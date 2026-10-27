@@ -675,33 +675,34 @@ def main():
     
     df_final = run.unique.copy()
 
-    # --- MHCMotifDecon annotation ---
-    df_binding,hlas = netmhcpan_annotation_table(
-            args.netMHCpan_xls
-        )
-        
-    plot_binding_results(
-            run,
-            df_binding,
-            hlas,
-            method="NetMHCpan",
-            save_dir=args.output_dir
-        )
-        
-    df_binding = df_binding.rename(
-            columns=lambda c: (
-            f"{c}_netMHCpan"
-            if c.startswith(("HLA", "NB"))
-            else c
-        )) 
-    df_binding["NB_netMHCpan"] = (df_binding["NB_netMHCpan"] > 0).astype(int)
+    # --- netMHCpan annotation (optional) ---
+    if args.netMHCpan_xls:
+        df_binding,hlas = netmhcpan_annotation_table(
+                args.netMHCpan_xls
+            )
+            
+        plot_binding_results(
+                run,
+                df_binding,
+                hlas,
+                method="NetMHCpan",
+                save_dir=args.output_dir
+            )
+            
+        df_binding = df_binding.rename(
+                columns=lambda c: (
+                f"{c}_netMHCpan"
+                if c.startswith(("HLA", "NB"))
+                else c
+            )) 
+        df_binding["NB_netMHCpan"] = (df_binding["NB_netMHCpan"] > 0).astype(int)
 
-    df_final = df_final.merge(
-            df_binding.rename(columns={"Peptide": "seq_clear"}),
-            on="seq_clear",
-            how="left",
-            suffixes=("", "_netMHCpan")
-        )
+        df_final = df_final.merge(
+                df_binding.rename(columns={"Peptide": "seq_clear"}),
+                on="seq_clear",
+                how="left",
+                suffixes=("", "_netMHCpan")
+            )
 
     # --- MHCMotifDecon annotation (optional) ---
     if args.motifdecon_txt:
@@ -746,7 +747,8 @@ def main():
         )
     
     # final df & saving
-    columns_to_fillna = dict(zip(args.hla.split(','), ['No binder']*len(args.hla.split(','))))
+    hlas_col = [h.strip() for h in args.hla.split(",") if h.strip()]
+    columns_to_fillna = dict(zip(hlas_col, ['No binder']*len(hlas_col)))
     columns_to_fillna.update({'Binder': False})
     df_final = df_final.fillna(value=columns_to_fillna)
     hlala_cryptic = pd.read_csv(args.hla_la_cryptic)
