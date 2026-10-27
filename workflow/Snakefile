@@ -210,7 +210,7 @@ rule run_Fragpipe:
         40
     resources:
         mem_mb = lambda wildcards, attempt: min(MAX_RAM_MB, 96000 + (attempt * 32000)),
-        runtime = 120,
+        runtime = lambda wildcards, attempt: 180 * attempt,
     benchmark: "_data/benchmark/run_Fragpipe/{project}.{translation_mode}.benchmark.txt",
     singularity:
         "workflow/containers/image/fragpipe.22.0.ubuntu.sif"
