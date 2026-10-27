@@ -177,7 +177,7 @@ rule construct_database:
     shell:
         '''
         work_dir=$(pwd)
-        mkdir ./_data/antigene_search/{params.project}/tmp
+        mkdir -p ./_data/antigene_search/{params.project}/tmp
         cd ./_data/antigene_search/{params.project}/tmp
         /fragpipe_bin/fragPipe-22.0/fragpipe/tools/Philosopher/philosopher-v5.1.1 workspace --init
         /fragpipe_bin/fragPipe-22.0/fragpipe/tools/Philosopher/philosopher-v5.1.1 database \
